@@ -16,10 +16,6 @@ Remember to watch your progress at http://cah.io.community/
 ## Recent updates
 Due to new features introduced in CAH tracking server and client, we have been able to further improve the architecture and obtain top performance by completely separating CPU workers from GPU workers.
 
-## More Recent
-
-I(Puffy Bird#7496) am working on improving the gpu worker for multigpu, using ray. 
-
 Thus the code migrated to:
 1. Swarm control: use `infrastructure.py` to control the swarm at Hetzner Cloud via commands like `python3 infrastructure.py up 20 fsn1` where up means bring up swarm, 20 is the desired number of nodes, and fsn1 is the desired datacenter location.
 2. CPU clients:
@@ -28,6 +24,10 @@ Thus the code migrated to:
 3. GPU clients only consume max 3.5GB of GPU VRAM so any GPU card with 4GB VRAM or more is deemed compatible:
     a) run `python3 gpu.py` from any Linux based PC with an Nvidia GPU and correct drivers installed
     b) run `gpuclient.ipynb` from any jupyter environment with GPU such as Google Colab with GPU accelerator.
+
+## More Recent Update
+
+I(Puffy Bird#7496) am working on improving the gpu worker for multigpu, using ray.
 
 If you want to install on your own box, then
 ## Prerequisites
