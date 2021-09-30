@@ -16,6 +16,10 @@ Remember to watch your progress at http://cah.io.community/
 ## Recent updates
 Due to new features introduced in CAH tracking server and client, we have been able to further improve the architecture and obtain top performance by completely separating CPU workers from GPU workers.
 
+## More Recent
+
+I(Puffy Bird#7496) am working on improving the gpu worker for multigpu, using ray. 
+
 Thus the code migrated to:
 1. Swarm control: use `infrastructure.py` to control the swarm at Hetzner Cloud via commands like `python3 infrastructure.py up 20 fsn1` where up means bring up swarm, 20 is the desired number of nodes, and fsn1 is the desired datacenter location.
 2. CPU clients:
