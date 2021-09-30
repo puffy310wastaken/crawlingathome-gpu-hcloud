@@ -24,6 +24,8 @@ import crawlingathome as cah
 sys.path.append("./crawlingathome-worker/")
 from multiprocessing import JoinableQueue, Process
 
+ray.init()
+
 """
 import sentry_sdk
 
