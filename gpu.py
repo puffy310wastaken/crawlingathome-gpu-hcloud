@@ -64,6 +64,7 @@ GPU workflow:
     The monitor displays the status of the workers as well as performance metrics about the jobs performed
 """
 
+
 def gpu_cah_interface(
     i: int,
     incomingqueue: JoinableQueue,
@@ -203,6 +204,7 @@ def gpu_cah_interface(
             logqueue.put(f"[io {i}] client crashed, respawning...")
             logqueue.put(e)  # see why clients crashes
             time.sleep(30)
+
 
 def io_worker(
     incomingqueue: JoinableQueue,
@@ -486,24 +488,40 @@ if __name__ == "__main__":
         int(3 * groupsize)
     ):  # we need 3x IO workers to keep GPU permanently busy
         outbound.append(JoinableQueue())
-    inb = ray.put(JoinableQueue())
-    upq = ray.put(JoinableQueue())
-    count = ray.put(JoinableQueue())
-    isize = ray.put(JoinableQueue())
-    gpuf = ray.put(JoinableQueue())
-    inbound = ray.get(inb)
-    uploadqueue = ray.get(upq)
-    counter = ray.get(count)
-    inpsize = ray.get(isize)
-    gpuflag = ray.get(gpuf)
+    inbound = JoinableQueue()
+    uploadqueue = JoinableQueue()
+    counter = JoinableQueue()
+    inpsize = JoinableQueue()  # use this to communicate number of jobs downloading now
+    gpuflag = JoinableQueue()  # use this to flag that gpu is processing
     sys.stderr = open("gpuerr.txt", "w")
     monitor = Process(
         target=monitor2, args=[groupsize * 3, inbound, outbound, counter, logqueue]
     ).start()
 
-    io = Process(target=io_worker, args=[inbound, outbound, groupsize, logqueue, YOUR_NICKNAME_FOR_THE_LEADERBOARD, CRAWLINGATHOME_SERVER_URL], daemon=True).start()
-    upd = Process(target=upload_worker, args=[uploadqueue, counter, outbound, logqueue], daemon=True).start()
+    io = Process(
+        target=io_worker,
+        args=[
+            inbound,
+            outbound,
+            groupsize,
+            logqueue,
+            YOUR_NICKNAME_FOR_THE_LEADERBOARD,
+            CRAWLINGATHOME_SERVER_URL,
+        ],
+        daemon=True,
+    ).start()
+    upd = Process(
+        target=upload_worker,
+        args=[uploadqueue, counter, outbound, logqueue],
+        daemon=True,
+    ).start()
 
     #  start gpu worker(s)
 
-    gpu_work = ray.get([gpu_worker.remote(inbound, outbound, counter, gpuflag, groupsize) for X in range(gpunum)])
+    gpu_work = ray.get(
+        [
+            gpu_worker.remote(inbound, outbound, counter, gpuflag, groupsize)
+            for X in range(gpunum)
+        ]
+    )
+
