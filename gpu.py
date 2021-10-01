@@ -204,7 +204,6 @@ def gpu_cah_interface(
             logqueue.put(e)  # see why clients crashes
             time.sleep(30)
 
-
 def io_worker(
     incomingqueue: JoinableQueue,
     outgoingqueue: list,
@@ -487,35 +486,24 @@ if __name__ == "__main__":
         int(3 * groupsize)
     ):  # we need 3x IO workers to keep GPU permanently busy
         outbound.append(JoinableQueue())
-    inbound = JoinableQueue()
-    uploadqueue = JoinableQueue()
-    counter = JoinableQueue()  # count number of jobs done
-    gpuflag = JoinableQueue()  # use this to flag that gpu is processing
-    logqueue = JoinableQueue()  # use this to send log lines to monitor
-
+    inb = ray.put(JoinableQueue())
+    upq = ray.put(JoinableQueue())
+    count = ray.put(JoinableQueue())
+    isize = ray.put(JoinableQueue())
+    gpuf = ray.put(JoinableQueue())
+    inbound = ray.get(inb)
+    uploadqueue = ray.get(upq)
+    counter = ray.get(count)
+    inpsize = ray.get(isize)
+    gpuflag = ray.get(gpuf)
     sys.stderr = open("gpuerr.txt", "w")
     monitor = Process(
         target=monitor2, args=[groupsize * 3, inbound, outbound, counter, logqueue]
     ).start()
 
-    # launch separate processes with specialized workers
-    io = Process(
-        target=io_worker,
-        args=[
-            inbound,
-            outbound,
-            groupsize,
-            logqueue,
-            YOUR_NICKNAME_FOR_THE_LEADERBOARD,
-            CRAWLINGATHOME_SERVER_URL,
-        ],
-        daemon=True,
-    ).start()
-    upd = Process(
-        target=upload_worker,
-        args=[uploadqueue, counter, outbound, logqueue],
-        daemon=True,
-    ).start()
+    io = Process(target=io_worker, args=[inbound, outbound, groupsize, logqueue, YOUR_NICKNAME_FOR_THE_LEADERBOARD, CRAWLINGATHOME_SERVER_URL], daemon=True).start()
+    upd = Process(target=upload_worker, args=[uploadqueue, counter, outbound, logqueue], daemon=True).start()
 
-    #  start gpu worker(s) I really hope ray doesn't make too many errors
-    gpu_work = [f.remote(gpu_worker(inbound, uploadqueue, gpuflag, groupsize, logqueue)) for i in range(gpunum)]
+    #  start gpu worker(s)
+
+    gpu_work = ray.get([gpu_worker.remote(inbound, outbound, counter, gpuflag, groupsize) for X in range(gpunum)])
