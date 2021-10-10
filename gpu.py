@@ -113,7 +113,7 @@ def gpu_cah_interface(
                     for file in glob(f"{job}/*_parsed.csv"):
                         os.system(f"mv {file} stats/")
                     for file in glob(f"{job}/*_unfiltered.csv"):
-                        os.system(f"mv {file} stats/")
+                        os.system(f"rm {file}")
                     for file in glob(f"{job}/*.csv"):
                         # Read in the file
                         with open(file, "rt") as f:
